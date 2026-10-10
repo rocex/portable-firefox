@@ -1,0 +1,14 @@
+# Dub 缓存和本地构建产物。
+.dub/
+build/
+dist/
+*.obj
+*.pdb
+*.lib
+
+# 运行日志和默认用户数据不纳入源码管理。
+portable.log
+profile/
+data/
+firefox/
+dub.selections.json

@@ -1,6 +1,6 @@
-# Firefox 便携路径替换
+# Firefox 便携版路径映射
 
-面向现代官方 Windows Firefox 的 D / Dub 项目。通过程序目录的 `version.dll` 指定用户配置、缓存和系统数据路径，不修改 Firefox 程序文件。
+面向现代官方 Windows Firefox 的 D 项目。通过程序目录的 `version.dll` 指定用户配置、缓存和系统数据路径，不修改 Firefox 程序文件。
 
 ## 构建与使用
 
@@ -18,28 +18,28 @@ dub build --config=portable --build=release --arch=x86 --compiler=ldc2
 
 完全退出 Firefox、备份配置后，将对应 DLL 放到 `firefox.exe` 同目录。位数按浏览器选择，不按操作系统选择。构建不自动覆盖 `firefox/` 中的文件。
 
-可选 `portable.ini` 与 DLL 同目录，只有一个无节配置键：
+可选 `portable.ini` 与 DLL 同目录，只有一个配置键：
 
 ```ini
 PortableDataPath=profile
 ```
 
-缺文件、缺键或空值使用 `profile`。相对路径以 DLL 所在目录为基准，支持中文、空格、环境变量、UTF-8 和带 BOM 的 UTF-16LE。检查编码、长度、重复根键及设备路径；忽略未知键和节标题。配置文件无法读取或内容无效时记录错误并停止当前进程，不回退到默认系统配置。
+缺文件、缺键或空值使用 `profile` 目录。相对路径以 DLL 所在目录为基准，支持中文、空格、环境变量、UTF-8 和带 BOM 的 UTF-16LE。检查编码、长度、重复根键及设备路径；忽略未知键和节标题。配置文件无法读取或内容无效时记录错误并停止当前进程，不回退到默认系统配置。
 
 ## 路径映射
 
-设 P 为 `PortableDataPath` 的绝对路径：
+设 `profile` 为 `PortableDataPath` 的绝对路径：
 
 | 用途 | 路径 |
 |---|---|
-| Firefox 用户配置 | P |
-| 本地配置／缓存 | P/AppData |
-| 应用元数据 | P/AppData/State |
-| RoamingAppData 查询 | P/AppData/RoamingAppData |
-| LocalAppData 查询 | P/AppData |
-| ProgramData 查询 | P/AppData/ProgramData |
+| Firefox 用户配置 | profile |
+| 本地配置／缓存 | profile/AppData |
+| 应用元数据 | profile/AppData/State |
+| RoamingAppData 查询 | profile/AppData/RoamingAppData |
+| LocalAppData 查询 | profile/AppData |
+| ProgramData 查询 | profile/AppData/ProgramData |
 
-默认目录布局示意，方便首次使用时对照：
+默认目录布局示意：
 
 ```text
 Firefox/

@@ -1,0 +1,36 @@
+{
+    "name": "portable-firefox",
+    "description": "支持 x86 和 x64 的 Firefox 便携目录重定向 DLL",
+    "targetType": "sourceLibrary",
+    "targetPath": "build/tests",
+    "sourcePaths": ["source"],
+    "buildTypes": {
+        "release": {
+            "buildOptions": ["releaseMode", "optimize"],
+            "lflags": ["/merge:.pdata=.rdata", "/merge:.dp=.rdata"]
+        }
+    },
+    "configurations": [
+        {
+            "name": "portable",
+            "targetType": "dynamicLibrary",
+            "platforms": ["windows"],
+            "targetName": "version",
+            "targetPath": "dist/$ARCH",
+            "sourceFiles": ["source/VersionExports.def"],
+            "copyFiles": ["portable.ini"],
+            "dflags": ["-betterC", "-checkaction=halt", "-defaultlib=", "-debuglib=", "-mscrtlib="],
+            "dflags-ldc": ["-Oz", "-enable-inlining=false", "-fvisibility=hidden", "-align-all-functions=1"],
+            "lflags": ["/entry:dllEntry", "/nodefaultlib", "/opt:ref", "/opt:icf", "/incremental:no", "/dynamicbase", "/nxcompat", "/timestamp:0", "kernel32.lib"],
+            "lflags-windows-x86_64": ["/highentropyva"]
+        },
+        {
+            "name": "unittest",
+            "sourcePaths": ["source-test"],
+            "preGenerateCommands": [
+                "dub build --config=portable --build=release --arch=x86 --compiler=ldc2 --skip-registry=all",
+                "dub build --config=portable --build=release --arch=x86_64 --compiler=ldc2 --skip-registry=all"
+            ]
+        }
+    ]
+}
