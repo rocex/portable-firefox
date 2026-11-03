@@ -60,10 +60,15 @@ unittest
             enum compiler = "dmd";
             enum childVersion = "-version=processChild";
         }
-        auto compilation = execute([
+        string[] compilerArguments = [
             compiler, "-m" ~ architecture, "-unittest", "-main", childVersion, "-Isource", "source/FolderRedirection.d", "source/RuntimeMemory.d",
             "source-test/FolderRedirectionTests.d", "-of=" ~ executable
-        ]);
+        ];
+        version(LDC)
+        {
+            compilerArguments ~= "-link-internally";
+        }
+        auto compilation = execute(compilerArguments);
         write(compilation.output);
         enforce(compilation.status == 0, "IAT 子测试编译失败，需要 PATH 中有 " ~ compiler);
         auto result = execute([executable]);

@@ -4,6 +4,7 @@
     "targetType": "sourceLibrary",
     "targetPath": "build/tests",
     "sourcePaths": ["source"],
+    "dflags-ldc": ["-link-internally"],
     "buildTypes": {
         "release": {
             "buildOptions": ["releaseMode", "optimize"],

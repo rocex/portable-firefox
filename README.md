@@ -127,6 +127,8 @@ dub test --config=firefox-test --compiler=ldc2 --arch=x86_64
 
 - 使用 `windows-latest`（GitHub 最新稳定 Windows 托管运行环境，不等同于所有 Windows 桌面版本）。
 - 矩阵覆盖最新稳定 DMD、LDC2，以及 x86、x86_64，共四组；每组执行非浏览器单元测试及 Release 构建。
+- LDC2 构建及子测试使用 `-link-internally` 固定内置 LLD；DMD 作业通过 `LINKCMD`/`LINKCMD64` 指定其安装目录内的 `lld-link.exe`。不自动选择 Visual Studio 的 `link.exe`。
+- `RuntimeMemory.d` 的内存操作仅在 LDC BetterC 构建中启用；普通单元测试使用其运行时的内存实现，避免重复符号。
 - CI 不运行 `firefox-test`，无需提供 Firefox。测试失败时，该组不上传产物；任何组失败都不会发布 Release。
 - Actions 运行详情的 Artifacts 中提供四份压缩包，名称包含编译器和架构，内含 `version.dll`、`portable.ini`，保留 30 天。
 - 推送的标签名包含 `release` 时，在全部四组通过后自动创建或更新同名 GitHub Release，附上四份压缩包。判断不区分大小写，例如 `v1.0-release`、`RELEASE-1.0`。普通分支提交、PR、手动运行不会发布 Release。

@@ -28,6 +28,23 @@ jobs:
         with:
           compiler: ${{ matrix.compiler }}
 
+      - name: Select bundled LLD for DMD
+        if: matrix.compiler == 'dmd-latest'
+        shell: pwsh
+        run: |
+          $compilerPath = (Get-Command dmd.exe -ErrorAction Stop).Source
+          $compilerDirectory = Split-Path $compilerPath
+          $candidates = @(
+            (Join-Path $compilerDirectory 'lld-link.exe'),
+            (Join-Path $compilerDirectory '../bin64/lld-link.exe')
+          )
+          $linkerPath = $candidates | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1
+          if (-not $linkerPath) { throw 'Bundled DMD lld-link.exe was not found.' }
+          $linkerPath = (Resolve-Path -LiteralPath $linkerPath).Path
+          "LINKCMD=$linkerPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "LINKCMD64=$linkerPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host "Using bundled linker: $linkerPath"
+
       - name: Build and run non-browser unit tests
         env:
           TEST_ARCH: ${{ matrix.arch }}

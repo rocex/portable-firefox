@@ -1,5 +1,7 @@
-// 为 LDC 提供不依赖 C 运行时的内存复制和填充函数。
+// 仅为 LDC BetterC 产物提供内存操作；普通测试程序使用 C 运行时实现。
 module RuntimeMemory;
+
+version(D_BetterC):
 
 version(LDC)
 {
