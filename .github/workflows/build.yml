@@ -1,0 +1,75 @@
+name: Build, Test and Release
+
+on:
+  push:
+    branches: ['**']
+    tags: ['**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Windows / ${{ matrix.compiler }} / ${{ matrix.arch }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [dmd-latest, ldc-latest]
+        arch: [x86, x86_64]
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up latest stable D compiler and Dub
+        uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ${{ matrix.compiler }}
+
+      - name: Build and run non-browser unit tests
+        env:
+          TEST_ARCH: ${{ matrix.arch }}
+          D_COMPILER: ${{ matrix.compiler == 'ldc-latest' && 'ldc2' || 'dmd' }}
+        run: dub test --config=unittest --arch=$env:TEST_ARCH --compiler=$env:D_COMPILER --skip-registry=all
+
+      - name: Package tested DLL and configuration
+        working-directory: dist/${{ matrix.arch }}
+        run: 7z a -tzip portable-firefox-${{ matrix.compiler }}-${{ matrix.arch }}.zip version.dll portable.ini
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: portable-firefox-${{ matrix.compiler }}-${{ matrix.arch }}
+          path: dist/${{ matrix.arch }}/portable-firefox-${{ matrix.compiler }}-${{ matrix.arch }}.zip
+          if-no-files-found: error
+          retention-days: 30
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    if: github.event_name == 'push' && github.ref_type == 'tag' && contains(github.ref_name, 'release')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all compiler and architecture artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: portable-firefox-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Create or update release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            release-assets/portable-firefox-dmd-latest-x86.zip
+            release-assets/portable-firefox-dmd-latest-x86_64.zip
+            release-assets/portable-firefox-ldc-latest-x86.zip
+            release-assets/portable-firefox-ldc-latest-x86_64.zip

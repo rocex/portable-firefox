@@ -27,9 +27,18 @@
         {
             "name": "unittest",
             "sourcePaths": ["source-test"],
+            "excludedSourceFiles": ["source-test/FirefoxIntegrationTests.d"],
             "preGenerateCommands": [
-                "dub build --config=portable --build=release --arch=x86 --compiler=ldc2 --skip-registry=all",
-                "dub build --config=portable --build=release --arch=x86_64 --compiler=ldc2 --skip-registry=all"
+                "dub build --config=portable --build=release --arch=x86 --compiler=$DC --skip-registry=all",
+                "dub build --config=portable --build=release --arch=x86_64 --compiler=$DC --skip-registry=all"
+            ]
+        },
+        {
+            "name": "firefox-test",
+            "sourcePaths": ["source-test"],
+            "excludedSourceFiles": ["source-test/PortableCoreTests.d", "source-test/ProfileEnvironmentTests.d", "source-test/FolderRedirectionTests.d", "source-test/PeArtifactTests.d"],
+            "preGenerateCommands": [
+                "dub build --config=portable --build=release --arch=x86_64 --compiler=$DC --skip-registry=all"
             ]
         }
     ]

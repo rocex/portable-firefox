@@ -50,12 +50,22 @@ unittest
             enum architecture = "32";
         }
         string executable = absolutePath(buildPath("build", "tests", "iat-child-" ~ architecture ~ ".exe"));
+        version(LDC)
+        {
+            enum compiler = "ldc2";
+            enum childVersion = "-d-version=processChild";
+        }
+        else
+        {
+            enum compiler = "dmd";
+            enum childVersion = "-version=processChild";
+        }
         auto compilation = execute([
-            "ldc2", "-m" ~ architecture, "-unittest", "-main", "-d-version=processChild", "-Isource", "source/FolderRedirection.d", "source/RuntimeMemory.d",
+            compiler, "-m" ~ architecture, "-unittest", "-main", childVersion, "-Isource", "source/FolderRedirection.d", "source/RuntimeMemory.d",
             "source-test/FolderRedirectionTests.d", "-of=" ~ executable
         ]);
         write(compilation.output);
-        enforce(compilation.status == 0, "IAT 子测试编译失败，需要 PATH 中有完整 LDC2");
+        enforce(compilation.status == 0, "IAT 子测试编译失败，需要 PATH 中有 " ~ compiler);
         auto result = execute([executable]);
         write(result.output);
         enforce(result.status == 0, "IAT 子测试失败，退出码：" ~ result.status.to!string);

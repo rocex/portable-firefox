@@ -73,7 +73,26 @@ DLL 只替换路径：**不创建数据目录、不探测写权限、不搬迁�
 
 ## 测试
 
-**运行测试前，必须在项目根目录下的 `firefox/` 子目录准备一套完整、可运行的 x64 Firefox 程序。** 不能只放 `firefox.exe`，也不能放尚未解压的安装包；需要保留 Firefox 原有的 DLL、资源文件和子目录。
+### 单元测试（不需要 Firefox）
+
+```text
+dub test --compiler=ldc2 --arch=x86_64
+dub test --compiler=ldc2 --arch=x86
+dub test --compiler=dmd --arch=x86_64
+dub test --compiler=dmd --arch=x86
+```
+
+默认 `dub test` 选择 `unittest`，使用所选编译器自动构建两种架构的 Release，并执行配置、路径、ABI、环境变量、KnownFolder/IAT、PE 产物及中文输出测试。IAT 子测试使用相同编译器和架构，在独立进程运行。需要 PATH 中有对应编译器、Dub，以及双架构系统库和运行时库；不会下载、启动或依赖 Firefox。
+
+### Firefox 集成测试（单独执行）
+
+```text
+dub test --config=firefox-test --compiler=ldc2 --arch=x86_64
+```
+
+`firefox-test` 自动构建 x64 Release，只运行真实 Firefox 页面验证及其控制台输出测试。
+
+**运行此配置前，必须在项目根目录下的 `firefox/` 子目录准备一套完整、可运行的 x64 Firefox 程序。** 不能只放 `firefox.exe`，也不能放尚未解压的安装包；需要保留 Firefox 原有的 DLL、资源文件和子目录。
 
 ```text
 项目根目录/
@@ -90,17 +109,9 @@ DLL 只替换路径：**不创建数据目录、不探测写权限、不搬迁�
     ...                         其余原始文件也必须保留
 ```
 
-以上仅列出部分文件，不是可裁剪的最小清单。缺少完整 Firefox 时，真实浏览器测试无法完成，`dub test` 会失败；测试不会自动下载 Firefox，也不会跳过浏览器验证。
+以上仅列出部分文件，不是可裁剪的最小清单。缺少完整 Firefox 时，`dub test --config=firefox-test` 会失败；不会自动下载或跳过浏览器验证。磁盘还需能容纳新程序副本，并允许监听回环端口。默认 `dub test` 不受 Firefox 是否存在影响。
 
-准备完成后，在项目根目录执行：
-
-```text
-dub test
-```
-
-唯一 `unittest` 配置自动构建两种架构的 Release，再运行配置、路径、ABI、环境变量、KnownFolder/IAT、PE 产物、中文输出和真实 Firefox 页面测试。IAT 测试自动使用子进程，避免污染其他测试；不需要手动选择测试组。控制台使用 Unicode 输出，文件和管道使用 UTF-8。测试代码不编入 DLL。
-
-前置条件：PATH 中有完整 LDC2；默认 `firefox/` 存在 x64 Firefox 程序文件；磁盘能容纳新副本，允许监听回环端口。缺前置条件明确报错，不自动下载或跳过。
+控制台使用 Unicode 输出，文件和管道使用 UTF-8。测试代码不编入 DLL。
 
 浏览器测试复制程序到新建 `build/browser-*`，不复制原 data、profile、INI 或代理 DLL。固定使用不存在的全新 Data，不预建目录；通过回环页面的 JavaScript HTTP 请求和截图验证。使用 Windows Job 在超时后清理测试进程树，不关闭沙箱，不运行原始参考 DLL，不修改原浏览器配置。
 
@@ -108,7 +119,18 @@ dub test
 - `PORTABLE_TEST_DLL`：指定与浏览器位数匹配的自产 DLL。
 - `PORTABLE_ARTIFACT_ROOT`：指定只读 PE 校验产物根（包含 x86、x86_64）。
 
-测试使用全新配置。`dub test --arch=x86 --compiler=ldc2` 使用 32 位测试进程，但默认真实 Firefox 仍为 x64，不代表已验证 32 位浏览器。
+集成测试使用全新配置。测试进程位数不代表浏览器位数；要验证 x86 Firefox，需准备完整的 32 位程序、先构建 x86 DLL，并通过上述变量指定两者。
+
+## GitHub Actions
+
+工作流 `.github/workflows/build.yml` 在推送任意分支提交或标签、提交 Pull Request 时自动执行，也支持 Actions 页面手动运行。
+
+- 使用 `windows-latest`（GitHub 最新稳定 Windows 托管运行环境，不等同于所有 Windows 桌面版本）。
+- 矩阵覆盖最新稳定 DMD、LDC2，以及 x86、x86_64，共四组；每组执行非浏览器单元测试及 Release 构建。
+- CI 不运行 `firefox-test`，无需提供 Firefox。测试失败时，该组不上传产物；任何组失败都不会发布 Release。
+- Actions 运行详情的 Artifacts 中提供四份压缩包，名称包含编译器和架构，内含 `version.dll`、`portable.ini`，保留 30 天。
+- 推送的标签名包含 `release` 时，在全部四组通过后自动创建或更新同名 GitHub Release，附上四份压缩包。判断不区分大小写，例如 `v1.0-release`、`RELEASE-1.0`。普通分支提交、PR、手动运行不会发布 Release。
+- 仓库须允许 GitHub Actions 运行；发布作业使用 `GITHUB_TOKEN` 的 `contents: write` 权限，无需另设发布令牌。
 
 ## 明确的兼容边界
 
@@ -124,6 +146,7 @@ dub test
 - `source/FirefoxPortable.d`：配置、路径、进程初始化和系统版本接口代理。
 - `source/FolderRedirection.d`：唯一 KnownFolder 路径包装及必要加载/IAT 处理。
 - `source/RuntimeMemory.d`：LLVM 隐式内存操作的最小实现，避免 CRT 依赖。
-- `source-test/`：统一 unittest；测试代码不编入 DLL。
+- `source-test/`：非浏览器单元测试与独立 Firefox 集成测试；测试代码不编入 DLL。
+- `.github/workflows/build.yml`：Windows 双编译器构建、单元测试和标签发布。
 
 发布配置使用体积优先优化、只读节合并、标准 PE 对齐和 NX/ASLR，不使用压缩壳。
