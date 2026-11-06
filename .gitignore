@@ -10,5 +10,5 @@ dist/
 portable.log
 profile/
 data/
-firefox/
+/firefox/
 dub.selections.json
