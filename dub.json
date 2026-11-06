@@ -18,7 +18,7 @@
             "platforms": ["windows"],
             "targetName": "version",
             "targetPath": "dist/$ARCH",
-            "sourceFiles": ["source/VersionExports.def"],
+            "sourceFiles": ["source/org/rocex/firefox/VersionExports.def"],
             "copyFiles": ["portable.ini"],
             "dflags": ["-betterC", "-checkaction=halt", "-defaultlib=", "-debuglib=", "-mscrtlib="],
             "dflags-ldc": ["-Oz", "-enable-inlining=false", "-fvisibility=hidden", "-align-all-functions=1"],
@@ -28,7 +28,7 @@
         {
             "name": "unittest",
             "sourcePaths": ["source-test"],
-            "excludedSourceFiles": ["source-test/FirefoxIntegrationTests.d"],
+            "excludedSourceFiles": ["source-test/org/rocex/firefox/test/FirefoxIntegrationTests.d"],
             "preGenerateCommands": [
                 "dub build --config=portable --build=release --arch=x86 --compiler=$DC --skip-registry=all",
                 "dub build --config=portable --build=release --arch=x86_64 --compiler=$DC --skip-registry=all"
@@ -37,7 +37,7 @@
         {
             "name": "firefox-test",
             "sourcePaths": ["source-test"],
-            "excludedSourceFiles": ["source-test/PortableCoreTests.d", "source-test/ProfileEnvironmentTests.d", "source-test/FolderRedirectionTests.d", "source-test/PeArtifactTests.d"],
+            "excludedSourceFiles": ["source-test/org/rocex/firefox/test/PortableCoreTests.d", "source-test/org/rocex/firefox/test/ProfileEnvironmentTests.d", "source-test/org/rocex/firefox/test/FolderRedirectionTests.d", "source-test/org/rocex/firefox/test/PeArtifactTests.d"],
             "preGenerateCommands": [
                 "dub build --config=portable --build=release --arch=x86_64 --compiler=$DC --skip-registry=all"
             ]
